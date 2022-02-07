@@ -1,0 +1,65 @@
+
+Computer A 
+
+song.mp3 = 1MiB (split into pieces of 1MiB) = 1 pieces
+
+Computer B wants it
+
+.torrent file -> {
+    pieceSize: 256KiB
+    count: 10
+
+
+}
+
+a block is a piece of the piece 16KiB
+no of blocks = 256 / 16
+
+block 0
+1
+.
+.
+.
+7 = 8 blocks.
+
+16384 bytes
+
+recvBufferPosition = 0
+recvBufferPosition = 100
+recvBufferPosition = 100 + 1000 = 1100
+......
+
+recvBufferPosition = 16384
+
+
+
+
+TODO
+
+Sometime when I request a block, wireshark shows I got it, but my code doesnt handle it properly
+and as a result, does not request the next block
+
+```
+[REUQESTING] Piece #3 Block #14
+[RECEIVED] Piece #3 Block #14
+
+[REUQESTING] Piece #3 Block #15
+[RECEIVED] Piece #3 Block #15
+[COMPLETED] Piece #3.
+[I/O] Wrtiting Piece #3 to file 4.png
+
+[REUQESTING] Piece #4 Block #0
+[I/O] Finished Wrtiting Piece #3 to file 4.png!
+[RECEIVED] Piece #4 Block #0
+
+[REUQESTING] Piece #4 Block #1
+```
+
+In this case, wireshark says I got P4B1, but my code did not. 
+
+```
+2288	1615.194465	127.0.0.1	127.0.0.1	BitTorrent	16441	Piece, Idx:0x4,Begin:0x4000,Len:0x4000  
+```
+
+always happens when requestng block 1
+
