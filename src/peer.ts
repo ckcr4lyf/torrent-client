@@ -2,8 +2,8 @@ import { Socket } from 'net';
 import { handshakeMessage, interestedMessage, blockRequestMessage, writePiece } from './functions';
 import { torrentMetadata, piece, block } from './declarations';
 import { EventEmitter } from 'events';
-import { isMainThread } from 'worker_threads';
-import { timingSafeEqual } from 'crypto';
+import * as crypto from 'crypto';
+
 
 export class peer extends EventEmitter {
     constructor(ip: string, port: number, metadata: torrentMetadata, peerId: string){ 
@@ -49,11 +49,11 @@ export class peer extends EventEmitter {
             //Its a valid block that exists.
             //Lets request it.
             this.recvBlock = this.thePiece.blocks[this.recvBlockIndex];
-            console.log(`[BLOCK INFO] Size: ${this.recvBlock.size} bytes.`)
+            console.log(`\n[BLOCK INFO] Size: ${this.recvBlock.size} bytes.`)
             this.recvBuffer = Buffer.alloc(this.recvBlock.size, 0); //0x00000000000000000000
             this.recvBufferPosition = 0;
             // this.recvBlockData = 
-            console.log(`\n[REUQESTING] Piece #${this.thePiece.number} Block #${this.recvBlockIndex}`)
+            console.log(`[REUQESTING] Piece #${this.thePiece.number} Block #${this.recvBlockIndex}`)
             this.client.write(blockRequestMessage(this.thePiece.number, this.recvBlock.start, this.recvBlock.size));
         } else if (this.recvBlockIndex == this.thePiece.blocks.length){
             //We got all the blocks bois.
@@ -146,6 +146,8 @@ export class peer extends EventEmitter {
 
         if (!this.recvBlockData){
 
+            //TODO: BIG PROBLEM: messageLength is NOT REAL TCP SEGMENT LENGTH!
+            // It is just the header from the other client as to how much the BT message will have...
             let messageLength = data.subarray(0, 4).readInt32BE(0);
             let messageId = data.readInt8(4);
 
@@ -162,14 +164,19 @@ export class peer extends EventEmitter {
                 let pieceIndex = data.subarray(5, 9).readInt32BE(0);
                 let pieceOffset = data.subarray(9, 13).readInt32BE(0); //16384, 32768... 16KiB
 
-                console.log(`[BLOCK METADATA] Piece #${this.thePiece.number} Block #${this.recvBlockIndex}`);
-                console.log(`[RECV METADATA] Piece Index #${pieceIndex} Piece Offset #${pieceOffset}`);
+                console.log(`[0-BLOCK METADATA] Piece #${this.thePiece.number} Block #${this.recvBlockIndex}`);
+                console.log(`[0-RECV METADATA] Piece Index #${pieceIndex} Piece Offset #${pieceOffset}`);
 
                 if (pieceIndex == this.thePiece.number && pieceOffset == this.recvBlock.start){
                     this.recvBlockData = true;
                     //It is the correct stuff.
                     //The amount of data is equal to messageLength - 9 bytes for the bittorrent metadata.
-                    let blockDataLen = messageLength - 9;
+
+                    //TODO: BIG PROBLEM: messageLength is NOT REAL TCP SEGMENT LENGTH!
+                    let blockDataLen = data.length - 13;
+                    console.log(`[0-RECV METADATA] Data byte count: ${blockDataLen}`);
+                    console.log(`[0-RECV METADATA] Actual Data byte count: ${data.length - 13}`);
+                    console.log(data.subarray(13));
                     
                     //Read this into our block buffer.
                     //this.recvBuffer should be zeroed out when we make the request.
@@ -183,13 +190,17 @@ export class peer extends EventEmitter {
 
                     //Lets copy the data we got into our buffer.
                     data.subarray(13).copy(this.recvBuffer, this.recvBufferPosition); //Copy the piece data part of the message into our buffer/
+                    console.log(this.recvBuffer.slice(this.recvBufferPosition));
                     this.recvBufferPosition += blockDataLen;
                     //We should check if we actually somehow received the whole piece in this message itself.
                     if (blockDataLen == this.recvBlock.size){
                         //Completed the block.
-                        console.log(`[RECEIVED] Piece #${this.thePiece.number} Block #${this.recvBlockIndex}`);
+                        console.log(`[0-RECEIVED] Piece #${this.thePiece.number} Block #${this.recvBlockIndex}`);
                         //Flush the data to our piece buffer.
+                        const blockHash = crypto.createHash('sha1').update(this.recvBuffer).digest('hex');
+                        console.log(`Block hash: ${blockHash}`);
                         this.recvBuffer.copy(this.thePiece.data, this.recvBlock.start);
+                        console.log(`Copied into piece at position ${this.recvBlock.start}`);
                         this.thePiece.blocks[this.recvBlockIndex].have = true;
                         //Request the next block.
                         this.recvBlockIndex++;
@@ -199,19 +210,26 @@ export class peer extends EventEmitter {
 
                     //Otherwise we expect more data as it is.
                     
+                } else {
+                    console.log(`Got something not expected! Dayum`);
                 }
 
             }
         } else {
             //All the data is part of our block.
-
+            console.log(`[1-RECV METADATA] Data byte count: ${data.length}`);
+            console.log(data);
             data.copy(this.recvBuffer, this.recvBufferPosition);
+            console.log(this.recvBuffer.slice(this.recvBufferPosition));
             this.recvBufferPosition += data.length;
 
             if (this.recvBufferPosition == this.recvBlock.size){
                 //I have got the whole block.
-                console.log(`[RECEIVED] Piece #${this.thePiece.number} Block #${this.recvBlockIndex}`);
+                console.log(`[1-RECEIVED] Piece #${this.thePiece.number} Block #${this.recvBlockIndex}`);
+                const blockHash = crypto.createHash('sha1').update(this.recvBuffer).digest('hex');
+                console.log(`Block hash: ${blockHash}`);
                 this.recvBuffer.copy(this.thePiece.data, this.recvBlock.start);
+                console.log(`Copied into piece at position ${this.recvBlock.start}`);
                 this.thePiece.blocks[this.recvBlockIndex].have = true;
                 this.recvBlockIndex++;
                 this.requestBlock();

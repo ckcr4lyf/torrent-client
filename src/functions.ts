@@ -1,6 +1,8 @@
+import * as path from 'path';
 import { block, file_in_torrent, piece, torrentMetadata } from './declarations';
 import { promises as fs } from 'fs';
 import { MAX_BLOCK_SIZE } from './constants';
+import * as crypto from 'crypto';
 
 export async function writePiece (pieceIndex: number, piece: piece, fileMap: Array<file_in_torrent>, metadata: torrentMetadata) {
     let pieceSize = piece.size ; //Size of THIS piece
@@ -39,8 +41,10 @@ export async function writePiece (pieceIndex: number, piece: piece, fileMap: Arr
         }
 
         //Write to the file
-        console.log(`[I/O] Wrtiting Piece #${pieceIndex} to file ${fileObject.name}`);
-        let fileHandle = await fs.open(fileObject.name, 'a+');
+        const pieceHash = crypto.createHash('sha1').update(piece.data).digest('hex');
+        console.log(`[I/O] Piece #${pieceIndex} has hash - ${pieceHash}`);
+        console.log(`[I/O] Wrtiting ${bytesToWrite} bytes of piece #${pieceIndex} from offset ${bytesWritten} to file ${fileObject.name} at position ${fileSeek}`);
+        let fileHandle = await fs.open(path.join(__dirname, '../.local/', fileObject.name), 'r+');
         await fileHandle.write(piece.data, bytesWritten, bytesToWrite, fileSeek);
         await fileHandle.close();
         console.log(`[I/O] Finished Wrtiting Piece #${pieceIndex} to file ${fileObject.name}!`);
