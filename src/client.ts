@@ -4,7 +4,7 @@
 
 import { torrentMetadata, piece, file_in_torrent } from './declarations';
 import { getLastPieceSize, preparePieceMap, writePiece } from './functions';
-import { peer } from './peer';
+import { Peer, peer } from './peer';
 import { peerid } from './test_constants';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -17,13 +17,21 @@ import * as path from 'path';
 //     pieceCount: 3 //61
 // };
 
+// let metadata: torrentMetadata = {
+//     infohash: '0c1159fb9bd9a0b12515d78e7fc3ce466aea5a53',
+//     pieceSize: 32768,
+//     torrentSize: 100000,
+//     lastPieceSize: -1,
+//     pieceCount: 4
+// }
+
 let metadata: torrentMetadata = {
-    infohash: '0c1159fb9bd9a0b12515d78e7fc3ce466aea5a53',
-    pieceSize: 32768,
-    torrentSize: 100000,
+    infohash: '946257fe9daaee2f0624b1307ce737d20a951e3b',
+    pieceSize: 131072,
+    torrentSize: 104857600,
     lastPieceSize: -1,
-    pieceCount: 4
-}
+    pieceCount: 800
+  }
 
 metadata.lastPieceSize = getLastPieceSize(metadata);
 
@@ -33,8 +41,8 @@ console.log(metadata);
 
 let filemap: Array<file_in_torrent> = [
     {
-        name: "random2.bin",
-        size: 100000,
+        name: "100MB.bin",
+        size: 104857600,
         offset: 0
     },
 ];
@@ -71,7 +79,7 @@ let pieceMap: {
 
         const filePath = path.join(__dirname, '../.local', file.name);
         await (await fs.open(filePath, 'w')).close();
-        await fs.truncate(filePath, file.size);
+        // await fs.truncate(filePath, file.size);
 
     }
 
@@ -90,8 +98,8 @@ let pieceMap: {
             let thePiece = pieceMap.incomplete[0];
             pieceMap.incomplete.splice(0, 1);
             pieceMap.downloading.push(thePiece);
-            p1.downloadPiece(thePiece);
             console.log(`going to download piece #${thePiece.number} which has size ${thePiece.size}, and ${thePiece.blocks.length} blocks.`)
+            p1.downloadPiece(thePiece);
         }
     })
 
@@ -109,7 +117,33 @@ let pieceMap: {
             let nextPiece = pieceMap.incomplete[0];
             pieceMap.incomplete.splice(0, 1);
             pieceMap.downloading.push(nextPiece);
+            console.log(`going to download piece #${nextPiece.number} which has size ${nextPiece.size}, and ${nextPiece.blocks.length} blocks.`)
             p1.downloadPiece(nextPiece);
         }
     })
 })();
+
+
+// Actual class stuff here...
+
+class TorrentClient {
+
+
+    public peers: Peer[];
+
+    constructor(){
+        this.peers = [];
+    }
+
+    /**
+     * newTorrent will start the download of a new torrent.
+     * 
+     * @param torrentFile The actual torrent file
+     */
+    newTorrent(torrentFile: Buffer){
+        // TODO: Parse the torrent file
+    }
+
+
+}
+
