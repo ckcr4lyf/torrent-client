@@ -5,18 +5,21 @@
 import bencode from '@ckcr4lyf/bencode-esm';
 import * as crypto from 'crypto';
 
-export const parseTorrent = (torrentFile: Buffer) => {
+export type TorrentMetadata = {
+    infohash: string;
+    name: string;
+}
 
-    console.log(bencode);
-
+export const parseTorrent = (torrentFile: Buffer): TorrentMetadata => {
     const parsed = bencode.decode(torrentFile);
-    // const parsed = bencode.decode(torrentFile, 'utf8');
+
 
     // To calculate SHA1 hash, we need to calculate SHA1 of infodict
     const infoBencoded = bencode.encode(parsed.info);
     const infohash = crypto.createHash('sha1').update(infoBencoded).digest('hex');
-    console.log(parsed.info.pieces);
-
     
-
+    return {
+        infohash: infohash,
+        name: parsed.info.name.toString(),
+    }
 }
