@@ -2,14 +2,15 @@
  * Functions for helping with torrent file stuffs
  */
 
-import * as bencode from 'bencode';
+import bencode from '@ckcr4lyf/bencode-esm';
 import * as crypto from 'crypto';
 
 export const parseTorrent = (torrentFile: Buffer) => {
 
-    console.log(bencode.default.decode);
+    console.log(bencode);
 
-    const parsed = bencode.decode(torrentFile, 'utf8');
+    const parsed = bencode.decode(torrentFile);
+    // const parsed = bencode.decode(torrentFile, 'utf8');
 
     // To calculate SHA1 hash, we need to calculate SHA1 of infodict
     const infoBencoded = bencode.encode(parsed.info);

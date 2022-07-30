@@ -1,5 +1,5 @@
 import { torrentMetadata } from './declarations';
-import { peer } from './peer';
+import { Peer } from './peer';
 
 export let metadata: torrentMetadata = {
     infohash: "9507515dbcc2934942a65366be5596e10f980fde",
@@ -11,5 +11,5 @@ export let metadata: torrentMetadata = {
 
 export const peerid: string = "2d4445313346302d5137774c456d516e56786a5a";
 
-export const mypeer: peer = new peer("127.0.0.1", 51000, metadata, peerid);
+export const mypeer: Peer = new Peer("127.0.0.1", 51000, metadata, peerid);
 

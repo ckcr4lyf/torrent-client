@@ -4,7 +4,7 @@
 
 import { torrentMetadata, piece, file_in_torrent } from './declarations';
 import { getLastPieceSize, preparePieceMap, writePiece } from './functions';
-import { Peer, peer } from './peer';
+import { Peer } from './peer';
 import { peerid } from './test_constants';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -85,7 +85,7 @@ let pieceMap: {
 
 
     //For now we will hardcode a peer for testing. Later on announce and get peers.
-    let p1 = new peer("46.232.211.243", 62086, metadata, peerid);
+    let p1 = new Peer("46.232.211.243", 62086, metadata, peerid);
     // let p1 = new peer("127.0.0.1", 51000, metadata, peerid);
 
     p1.connect();
