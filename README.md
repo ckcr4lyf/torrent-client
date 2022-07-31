@@ -4,6 +4,8 @@ Trying to write a torrent client using pure TCP sockets capable of at least down
 
 This is meant as a proof-of-concept kinda thing to get more familiar with the BitTorrent peer protocol, as well as network / TCP programming.
 
+# Related Projects (by me!)
+
 If this interests you, check out my other torrent-related projects:
 
 * [kiryuu](https://github.com/ckcr4lyf/kiryuu) , an HTTP bittorrent tracker written in Rust
