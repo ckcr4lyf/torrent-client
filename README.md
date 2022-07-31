@@ -4,7 +4,7 @@ Trying to write a torrent client using pure TCP sockets capable of at least down
 
 This is meant as a proof-of-concept kinda thing to get more familiar with the BitTorrent peer protocol, as well as network / TCP programming.
 
-# Related Projects (by me!)
+## Related Projects (by me!)
 
 If this interests you, check out my other torrent-related projects:
 
